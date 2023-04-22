@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+  <div class="row">
+    <div class="col-md-12">
+      <h1 class="my-4">Workers</h1>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Userame</th>
+            <!-- <th>Job Title</th> -->
+          </tr>
+        </thead>
+        <tbody>
+          {% for worker in workers %}
+            <tr 
+            >
+              <td>{{ worker.id }}</td>
+              <td>{{ worker.username }}</td>
+              <!-- <td>{{ worker.job_title }}</td> -->
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}
