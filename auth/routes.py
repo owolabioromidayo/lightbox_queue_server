@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-
+from flask_mail import Mail, Message
 
 from main import app, db
 from main.models.user import User
@@ -8,6 +8,19 @@ from main.models.worker import Worker
 from main.forms import LoginForm, RegistrationForm
 
 bp = Blueprint('auth', __name__, url_prefix="/auth")
+
+
+# app.config['MAIL_SERVER']='<your_email_provider_smtp_server>'
+# app.config['MAIL_PORT'] = <your_email_provider_smtp_port>
+# app.config['MAIL_USERNAME'] = '<your_email_address>'
+# app.config['MAIL_PASSWORD'] = '<your_email_password>'
+# app.config['MAIL_USE_TLS'] = False
+# app.config['MAIL_USE_SSL'] = True
+
+# mail = Mail(app)
+
+
+
 
 @bp.route('/api/login', methods=['GET', 'POST'])
 def user_login():

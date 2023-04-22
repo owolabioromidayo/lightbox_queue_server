@@ -12,6 +12,7 @@ class User(db.Model):
     created = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow())
     admin = db.Column(db.Boolean, nullable=False, default=False)
     disabled = db.Column(db.Boolean, nullable=False, default=False)
+    trust_score = db.Column(db.Integer)
 
     """
         things to add
@@ -35,6 +36,7 @@ class User(db.Model):
         self.password_hash = generate_password_hash(password)
         self.admin = admin
         self.disabled = False 
+        self.trust_score = 1000 #starts from 1000 and decreases/increases based on actions
 
 
     def check_password(self, password):

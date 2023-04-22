@@ -5,6 +5,24 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import redis, pickle, threading, time
 
+import heapq
+
+class PriorityQueue:
+    def __init__(self):
+        self._queue = []
+        self._index = 0
+
+    def push(self, item, priority):
+        heapq.heappush(self._queue, (-priority, self._index, item))
+        self._index += 1
+
+    def pop(self):
+        return heapq.heappop(self._queue)[-1]
+
+    def __len__(self):
+        return len(self._queue)
+
+
 
 from main.models.user import User
 from main.models.worker import Worker
@@ -44,7 +62,7 @@ limiter = Limiter(
 )
 
 
-socketio = SocketIO(app, logger=True, max_http_buffer_size=5*10e6)
+socketio = SocketIO(app, logger=True, max_http_buffer_size=100*10e6)
 
 
 
@@ -69,9 +87,10 @@ socketio = SocketIO(app, logger=True, max_http_buffer_size=5*10e6)
 
 @socketio.on('broadcast information')
 def handle_broadcast_information(_json):
-    #need to have something here for adding new worker, etc, having a worker poll
     # print(_json)
     api_id, models = _json["data"]["api_id"], _json["data"]["models"]
+
+    #reconnects could be handled here
 
     try:
         worker_id = Worker.decode_auth_token(api_id)
@@ -80,7 +99,7 @@ def handle_broadcast_information(_json):
         if worker:
             _id = worker.username + "_" + str(worker.id)
             workers[_id] = {"models" : models, "in_use": False}
-            work_queue[_id] = []
+            work_queue[_id] = PriorityQueue()
 
             worker_id_map[api_id]= _id
 
@@ -158,7 +177,7 @@ def exec_federated_task(_id):
 
     #dispatch work to worker
     timestamp = time.time()
-    work_queue[_id].insert(0, { "model": _json["model"], "args": _json, "timestamp": timestamp})
+    work_queue[_id].push({ "model": _json["model"], "args": _json, "timestamp": timestamp}, 400 ) #queue servers have lower priority
     work_returns[timestamp] = None
 
     while work_returns[timestamp] == None:
@@ -230,9 +249,9 @@ def exec_task(_id):
                 return user_id, 401
             
             print(user_id, token)
-            # user = User.query.filter_by(id=user_id).first() #check if this fails
-            # if not user:
-            #     raise ValueError
+            user = User.query.filter_by(id=user_id).first() #check if this fails
+            if not user:
+                raise ValueError
 
         except:
             return "Invalid Token", 401
@@ -251,7 +270,9 @@ def exec_task(_id):
 
     #dispatch work to worker
     timestamp = time.time()
-    work_queue[_id].insert(0, { "model": _json["model"], "args": _json, "timestamp": timestamp})
+    #get worker priority
+
+    work_queue[_id].push({ "model": _json["model"], "args": _json, "timestamp": timestamp}, user.trust_score)
     work_returns[timestamp] = None
 
     while work_returns[timestamp] == None:
