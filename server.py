@@ -1,4 +1,4 @@
-import os, sys, json, random, base64, time, copy, requests
+import os, sys, json, random, base64, time, copy, requests, datetime 
 from flask import Flask, send_file, request, render_template
 from flask_socketio import SocketIO, send, emit 
 from flask_limiter import Limiter
@@ -6,6 +6,17 @@ from flask_limiter.util import get_remote_address
 import redis, pickle, threading, time
 
 import heapq
+
+
+
+
+from main.models.user import User
+from main.models.worker import Worker
+
+from main import app, db
+
+from views.routes import bp as views_bp
+from  auth.routes import bp as auth_bp
 
 class PriorityQueue:
     def __init__(self):
@@ -22,22 +33,15 @@ class PriorityQueue:
     def __len__(self):
         return len(self._queue)
 
-
-
-from main.models.user import User
-from main.models.worker import Worker
-
-from main import app, db
-
-from views.routes import bp as views_bp
-from  auth.routes import bp as auth_bp
-
 app.register_blueprint(views_bp)
 app.register_blueprint(auth_bp)
 
 
 # r = redis.Redis(port=6379)
 AGREED_FEDERATED_TOKEN = "something_more_secret"
+TRUST_SCORE_UPDATE = 40
+TRUST_SCORE_RESET_PVE_HRS = 24
+TRUST_SCORE_RESET_NVE_HRS = 48
 
 workers = dict()
 work_queue = dict()
@@ -249,15 +253,35 @@ def exec_task(_id):
                 return user_id, 401
             
             print(user_id, token)
-            user = User.query.filter_by(id=user_id).first() #check if this fails
-            if not user:
-                raise ValueError
+                
 
         except:
             return "Invalid Token", 401
 
     else:
         return  "Content-Type not supported", 400
+
+    user = db.session.query(User).filter_by(id=user_id).first() 
+    if not user:
+        raise ValueError
+    print("this works ")
+    # user = User.query.filter_by(id=user_id).first() #check if this fails
+
+    #check trust score and last update time
+    time_delta = datetime.datetime.utcnow() - user.last_update_time 
+    hours_delta = time_delta / datetime.timedelta(hours=1)
+
+    if user.trust_score > 0 and hours_delta >= TRUST_SCORE_RESET_PVE_HRS:
+        user.trust_score = 1000
+        db.session.commit()
+
+    if user.trust_score <= 0 and hours_delta >= TRUST_SCORE_RESET_NVE_HRS:
+        user.trust_score = 1000
+        db.session.commit()
+
+    print("we got here")            
+    if user.trust_score <= 0:
+        return "Request rejected, trust score too low", 403
 
     worker = workers[_id]
 
@@ -284,6 +308,9 @@ def exec_task(_id):
     if work_returns[timestamp] == "Failed":
         return "Task was aborted by GPU client", 500
     
+    user.trust_score -= TRUST_SCORE_UPDATE #trust score update
+    db.session.commit()
+
     _response = copy.deepcopy(work_returns[timestamp])
     print("Finished task with return obj")
     del work_returns[timestamp]

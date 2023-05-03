@@ -13,11 +13,8 @@ class User(db.Model):
     admin = db.Column(db.Boolean, nullable=False, default=False)
     disabled = db.Column(db.Boolean, nullable=False, default=False)
     trust_score = db.Column(db.Integer)
+    last_update_time = db.Column(db.DateTime, nullable=True, default=datetime.datetime.utcnow())
 
-    """
-        things to add
-            last logged in 
-    """
 
     #learn more about relationships
     # contacts = db.relationship('Contact', backref='user', lazy='dynamic')

@@ -3,6 +3,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
   <div class="row">
     <div class="col-md-6 mx-auto">
       <h1 class="my-4">Register</h1>
@@ -43,6 +44,8 @@
             <span class="text-danger">{{ error }}</span>
           {% endfor %}
         </div>
+          <label for="h-captcha">Please complete the captcha:</label>   
+          {{hcaptcha}}
         <button type="submit" class="btn btn-primary">Register</button>
       </form>
     </div>

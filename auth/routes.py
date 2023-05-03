@@ -1,11 +1,16 @@
 from flask import Blueprint, render_template, request
 from flask_mail import Mail, Message
+# from flask_hcaptcha import hCaptcha
 
-from main import app, db
+
+from main import app, db, hcaptcha
 from main.models.user import User
 from main.models.worker import Worker
 
 from main.forms import LoginForm, RegistrationForm
+
+
+# hcaptcha = hCaptcha(app)
 
 bp = Blueprint('auth', __name__, url_prefix="/auth")
 
@@ -80,6 +85,8 @@ def user_register_view():
     form = RegistrationForm()
 
     if form.validate_on_submit():
+            print(form.data)
+            # if hcaptcha.verify():
             if form.data["user_type"] == "user":
                 try: 
                     user = User(username=form.data["username"], password= form.data["password"], email= form.data["email"]) #check if this fails
@@ -96,6 +103,8 @@ def user_register_view():
                     return f"Here's your Token: {worker.encode_auth_token()}"
                 except:
                     return "User exists or incorrect details"
+            # else:
+            #     return "Captcha not completed. Could not verify user"
 
 
     return render_template('auth/register.html', title='Sign In', form=form)
