@@ -102,7 +102,7 @@ def user_register_view():
                     db.session.commit()
                     return f"Here's your Token: {worker.encode_auth_token()}"
                 except:
-                    return "User exists or incorrect details"
+                    return "Worker exists or incorrect details"
             # else:
             #     return "Captcha not completed. Could not verify user"
 

@@ -98,17 +98,27 @@ def handle_broadcast_information(_json):
 
     try:
         worker_id = Worker.decode_auth_token(api_id)
+        print("worker id found", worker_id)
 
-        worker= Worker.query.filter_by(id=worker_id).first() #check if this fails
-        if worker:
-            _id = worker.username + "_" + str(worker.id)
-            workers[_id] = {"models" : models, "in_use": False}
-            work_queue[_id] = PriorityQueue()
+        # worker= Worker.query.filter_by(id=worker_id).first() #check if this fails
+        worker = db.session.query(Worker).filter_by(id=worker_id).first() 
+        if not worker:
+            raise ValueError
+        
 
-            worker_id_map[api_id]= _id
+        #update worker broadcast
+        worker.last_broadcast = json.dumps(models, indent=1)
+        db.session.commit()
 
-            print(_id)
-            emit('broadcast information', 'Authenticated')
+        #configure worker queue
+        _id = worker.username + "_" + str(worker.id)
+        workers[_id] = {"models" : models, "in_use": False}
+        work_queue[_id] = PriorityQueue()
+
+        worker_id_map[api_id]= _id
+
+        print(_id)
+        emit('broadcast information', 'Authenticated')
     except:
         emit('broadcast information', 'Worker object could not be loaded')
 
@@ -264,7 +274,8 @@ def exec_task(_id):
     user = db.session.query(User).filter_by(id=user_id).first() 
     if not user:
         raise ValueError
-    print("this works ")
+    
+    # print("this works ")
     # user = User.query.filter_by(id=user_id).first() #check if this fails
 
     #check trust score and last update time

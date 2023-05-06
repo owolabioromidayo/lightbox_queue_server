@@ -12,6 +12,7 @@
             <th>ID</th>
             <th>Username</th>
             <th>Email</th>
+            <th>Trust Score</th>
           </tr>
         </thead>
         <tbody>
@@ -20,6 +21,7 @@
               <td>{{ user.id }}</td>
               <td>{{ user.username }}</td>
               <td>{{ user.email }}</td>
+              <td>{{ user.trust_score}}</td>
             </tr>
           {% endfor %}
         </tbody>
