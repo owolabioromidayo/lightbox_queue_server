@@ -66,7 +66,7 @@ limiter = Limiter(
 )
 
 
-socketio = SocketIO(app, logger=True, max_http_buffer_size=100*10e6)
+socketio = SocketIO(app, logger=True, max_http_buffer_size=100*10e6, cors_allowed_origins="*")
 
 
 
