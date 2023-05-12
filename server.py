@@ -1,13 +1,11 @@
-import os, sys, json, random, base64, time, copy, requests, datetime 
+import  json, random, base64, time, copy, requests, datetime 
 from flask import Flask, send_file, request, render_template
 from flask_socketio import SocketIO, send, emit 
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-import redis, pickle, threading, time
+
 
 import heapq
-
-
 
 
 from main.models.user import User
@@ -17,6 +15,8 @@ from main import app, db
 
 from views.routes import bp as views_bp
 from  auth.routes import bp as auth_bp
+
+
 
 class PriorityQueue:
     def __init__(self):
@@ -49,13 +49,6 @@ work_returns = dict()
 
 worker_id_map  = dict() #to prevent token stealing, maps generated id to token
 
-#restore data if crash
-# if r.get("workers") and r.get("work_queue") and r.get("work_returns"):
-#     workers = pickle.loads(r.get("workers"))
-#     work_queue = pickle.loads(r.get("work_queue"))
-#     work_returns = pickle.loads(r.get("work_returns"))
-
-#     time.sleep(10) #to allow everyone to reconnect
 
 limiter = Limiter(
     get_remote_address,
@@ -67,23 +60,6 @@ limiter = Limiter(
 
 
 socketio = SocketIO(app, logger=True, max_http_buffer_size=100*10e6, cors_allowed_origins="*")
-
-
-
-
-# def periodic_save_redis():
-#     while True: 
-        
-#         r.set('workers', pickle.dumps(workers))
-#         r.set('work_queue', pickle.dumps(work_queue))
-#         value = pickle.loads(r.get('foo'))
-#         print(value[1]['1'])
-
-#         time.sleep(2*60)
-
-# thread = threading.Thread(target=periodic_save_redis)
-# thread.start()
-
 
 
 
@@ -181,13 +157,7 @@ def exec_federated_task(_id):
     else:
         return  "Content-Type not supported", 400
 
-    worker = workers[_id]
-
-    while worker["in_use"] == True:
-        socketio.sleep(5)
-        continue
-
-    worker["in_use"] = True
+    # worker = workers[_id]
 
     #dispatch work to worker
     timestamp = time.time()
@@ -197,8 +167,6 @@ def exec_federated_task(_id):
     while work_returns[timestamp] == None:
         socketio.sleep(5)
         continue
-
-    worker["in_use"] = False 
 
     if work_returns[timestamp] == "Failed":
         return "Task was aborted by GPU client", 500
@@ -263,11 +231,9 @@ def exec_task(_id):
                 return user_id, 401
             
             print(user_id, token)
-                
 
         except:
             return "Invalid Token", 401
-
     else:
         return  "Content-Type not supported", 400
 
@@ -296,25 +262,15 @@ def exec_task(_id):
 
     worker = workers[_id]
 
-
-    while worker["in_use"] == True:
-        socketio.sleep(5)
-        continue
-
-    worker["in_use"] = True
-
     #dispatch work to worker
     timestamp = time.time()
     #get worker priority
-
     work_queue[_id].push({ "model": _json["model"], "args": _json, "timestamp": timestamp}, user.trust_score)
     work_returns[timestamp] = None
 
     while work_returns[timestamp] == None:
         socketio.sleep(5)
         continue
-
-    worker["in_use"] = False 
 
     if work_returns[timestamp] == "Failed":
         return "Task was aborted by GPU client", 500

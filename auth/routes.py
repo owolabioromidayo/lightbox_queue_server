@@ -3,7 +3,7 @@ from flask_mail import Mail, Message
 # from flask_hcaptcha import hCaptcha
 
 
-from main import app, db, hcaptcha
+from main import app, db, hcaptcha, mail
 from main.models.user import User
 from main.models.worker import Worker
 
@@ -15,70 +15,12 @@ from main.forms import LoginForm, RegistrationForm
 bp = Blueprint('auth', __name__, url_prefix="/auth")
 
 
-# app.config['MAIL_SERVER']='<your_email_provider_smtp_server>'
-# app.config['MAIL_PORT'] = <your_email_provider_smtp_port>
-# app.config['MAIL_USERNAME'] = '<your_email_address>'
-# app.config['MAIL_PASSWORD'] = '<your_email_password>'
-# app.config['MAIL_USE_TLS'] = False
-# app.config['MAIL_USE_SSL'] = True
-
-# mail = Mail(app)
+def send_email(to, subject, body):
+    message = Message(subject, recipients=[to])
+    message.body = body
+    mail.send(message)
 
 
-
-
-@bp.route('/api/login', methods=['GET', 'POST'])
-def user_login():
-    _json = None
-    content_type = request.headers.get("Content-Type")
-    if (content_type == "application/json"):
-        _json = request.json
-        user = User.query.filter_by(username=_json["username"]).first() #check if this fails
-        if user:
-            if user.check_password(_json["password"]):
-                return user.encode_auth_token()
-            else:
-                return {
-                    "success": False,
-                    "error": "Incorrect login details"
-                }
-        else:
-            return {
-                "success": False,
-                "error": "Incorrect login details"
-            }
-    else:
-        return {
-            "success": False,
-            "error": "Content-Type not supported"
-        }
-
-
-@bp.route('/api/register', methods=['GET', 'POST'])
-def user_register():
-
-    _json = None
-    content_type = request.headers.get("Content-Type")
-    if (content_type == "application/json"):
-        _json = request.json
-        try:
-            user = User(username=_json["username"], password=_json["password"], email=_json["email"]) #check if this fails
-            db.session.add(user)
-            db.session.commit()
-
-            return user.encode_auth_token()
-        except:
-            #user exists
-            return {
-                "success": False,
-                "error": "User exists or not all details were passed "
-            }
-
-    else:
-        return {
-            "success": False,
-            "error": "Content-Type not supported"
-        }
 
 @bp.route('/register', methods=['GET', "POST"])
 def user_register_view():
@@ -92,7 +34,8 @@ def user_register_view():
                     user = User(username=form.data["username"], password= form.data["password"], email= form.data["email"]) #check if this fails
                     db.session.add(user)
                     db.session.commit()
-                    return f"Here's your Token: {user.encode_auth_token()}"
+                    send_email(form.data["email"],"Welcome to LightBox!" , f"Here's your Token: {user.encode_auth_token()}")
+                    return f"Your Token has been sent to your email."
                 except:
                     return "User exists or incorrect details"
             else:
@@ -100,7 +43,8 @@ def user_register_view():
                     worker = Worker(username=form.data["username"], password= form.data["password"], email= form.data["email"]) #check if this fails
                     db.session.add(worker)
                     db.session.commit()
-                    return f"Here's your Token: {worker.encode_auth_token()}"
+                    send_email(form.data["email"],"Welcome to LightBox!" , f"Here's your Token: {worker.encode_auth_token()}")
+                    return f"Your Token has been sent to your email."
                 except:
                     return "Worker exists or incorrect details"
             # else:
@@ -119,7 +63,8 @@ def login_view():
             user = User.query.filter_by(username=form.data["username"]).first() #check if this fails
             if user:
                 if user.check_password(form.data["password"]):
-                    return f"Here's your Token: {user.encode_auth_token()}"
+                    send_email(user.email,"Updated Token!" , f"Here's your Token: {user.encode_auth_token()}")
+                    return f"Your Token has been sent to your email."
                 else:
                     return "Invalid details"
             else:
@@ -128,7 +73,8 @@ def login_view():
             worker= Worker.query.filter_by(username=form.data["username"]).first() #check if this fails
             if worker:
                 if worker.check_password(form.data["password"]):
-                    return f"Here's your Token: {worker.encode_auth_token()}"
+                    send_email(worker.email,"Updated Token!" , f"Here's your Token: {worker.encode_auth_token()}")
+                    return f"Your Token has been sent to your email."
                 else:
                     return "Invalid details"
             else:
