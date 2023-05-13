@@ -3,7 +3,6 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS
-from flask_hcaptcha import hCaptcha
 from flask_mail import Mail
 from dotenv import load_dotenv
 
@@ -18,9 +17,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + \
     os.path.join(basedir, 'data.sqlite')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-app.config['HCAPTCHA_SITE_KEY'] = 'd7c95aef-1b7a-47e4-a671-d5927504fa91'
-app.config['HCAPTCHA_SECRET_KEY'] = 'secret_key'
-app.config['HCAPTCHA_ENABLED '] = True
+
+app.config['RECAPTCHA_PUBLIC_KEY']= os.environ['CAPTCHA_PUBLIC']
+app.config['RECAPTCHA_PRIVATE_KEY']= os.environ['CAPTCHA_PRIVATE']
 
 
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -36,4 +35,3 @@ db = SQLAlchemy(app)
 Migrate(app, db)
 CORS(app)
 
-hcaptcha = hCaptcha(app)
