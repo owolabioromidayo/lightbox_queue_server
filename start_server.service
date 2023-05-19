@@ -9,8 +9,8 @@ User=root
 Type=simple
 ExecStart=/usr/local/bin/start_server.sh 
 Restart=on-failure
-RestartSce=10
-Killmode=process
+RestartSec=10
+KillMode=process
 
 
 [Install]  
