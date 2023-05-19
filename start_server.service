@@ -1,0 +1,17 @@
+[Unit]
+Description=Run Flask Server 
+
+Wants=network.target                                        
+After=syslog.target network-online.target   
+
+[Service]
+User=root
+Type=simple
+ExecStart=/usr/local/bin/start_server.sh 
+Restart=on-failure
+RestartSce=10
+Killmode=process
+
+
+[Install]  
+WantedBy=multi-user.target      

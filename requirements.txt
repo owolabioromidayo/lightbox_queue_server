@@ -1,3 +1,4 @@
+python-dotenv
 absl-py==1.4.0
 alembic==1.10.2
 astunparse==1.6.3
@@ -72,7 +73,6 @@ Pygments==2.15.0
 PyGObject==3.42.1
 PyJWT==2.3.0
 pyparsing==2.4.7
-python-apt==2.3.0+ubuntu2.1
 python-engineio==4.4.0
 python-socketio==5.8.0
 PyYAML==5.4.1
@@ -109,6 +109,5 @@ flask_wtf
 email_validator
 simple-websocket
 gunicorn
-python-dotenv
  
 

@@ -35,3 +35,4 @@ db = SQLAlchemy(app)
 Migrate(app, db)
 CORS(app)
 
+

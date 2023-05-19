@@ -285,7 +285,7 @@ def exec_task(_id):
 
 
 if __name__ == "__main__":
-    socketio.run(app, debug=True, port=3009) 
+    socketio.run(app, debug=True, host="0.0.0.0", allow_unsafe_werkzeug=True, port=3009) 
 
 
 
